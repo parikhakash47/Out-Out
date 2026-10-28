@@ -63,6 +63,7 @@ a.tag{color:var(--gold)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:9px 16px}
 .chip[aria-pressed="true"]{background:var(--hot);color:#0a0a0a;border-color:var(--hot)}
+.warn{border:1px solid var(--hot);border-radius:10px;padding:9px 12px;margin:0 0 16px;font-size:.9rem;color:var(--gold)}
 </style>
 </head>
 <body>
@@ -169,6 +170,7 @@ function render(d){
   const out=$('out');out.replaceChildren();
   out.appendChild(el('h2','title',d.title||'Your night out'));
   out.appendChild(el('p','vibe',d.vibe||''));
+  out.appendChild(el('div','warn',d.live?'Heads up: the creators were a little tipsy when they made this. Check opening hours before you go.':'Heads up: the creators were a little tipsy when they made this. Double-check each place is open (and actually exists) before you go.'));
   const n=(d.stops||[]).length;
   (d.stops||[]).forEach((s,i)=>{
     const c=el('div','stop');c.style.animationDelay=(i*140)+'ms';
