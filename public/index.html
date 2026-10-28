@@ -55,6 +55,10 @@ form{border-color:var(--hot);box-shadow:0 0 40px rgba(212,175,55,.08)}
 a.tag{color:var(--gold)}
 .acts{display:flex;gap:8px;margin-top:10px}
 .mini{padding:6px 10px;font-size:.85rem}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);max-width:92vw;background:#000;color:var(--gold);border:1px solid var(--hot);border-radius:999px;padding:10px 18px;font-weight:600;font-size:.95rem;z-index:50;box-shadow:0 6px 24px #000a;display:none;text-align:center}
+#toast.show{display:block}
+#toast.bad{color:#ff8a80;border-color:#ff8a80}
+#out.working .stop,#out.working .tweak{opacity:.55;pointer-events:none}
 .tweak{margin-top:22px;background:var(--card);border:1px dashed var(--hot);border-radius:14px;padding:16px;display:grid;gap:10px}
 .tweak h3{margin:0;font-size:1.3rem;color:var(--hot)}
 .go.small{font-size:1rem;padding:12px}
@@ -104,6 +108,7 @@ a.tag{color:var(--gold)}
 <span id="modehint" class="tag"></span></label>
 <button class="go" id="go" type="submit">Make it a night</button>
 </form>
+<div id="toast" role="status" aria-live="polite"></div>
 <div id="out" aria-live="polite"></div>
 </main>
 <script>
@@ -140,12 +145,25 @@ $('geo').onclick=()=>{
 
 let plan=null,brief=null,busy=false;
 async function run(payload,fail){
-  try{
-    const r=await fetch('/api/plan',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
-    const j=await r.json();
-    if(!r.ok){fail(j.error||'Something went wrong. Try again.');return}
-    plan=j;render(plan);
-  }catch(_){fail('Could not reach the server. Check your connection and try again.')}
+  for(let k=0;k<2;k++){
+    let r,j;
+    try{
+      r=await fetch('/api/plan',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+      j=await r.json();
+    }catch(_){
+      if(k===0){await new Promise(z=>setTimeout(z,1200));continue}
+      fail('Could not reach the server. Check your connection and try again.');return false
+    }
+    if(!r.ok){fail((j&&j.error)||'Something went wrong. Try again.');return false}
+    plan=j;
+    try{render(plan)}catch(e){fail('Got a plan but could not show it. Try again.');return false}
+    return true;
+  }
+}
+let tt;
+function toast(msg,bad,keep){
+  const t=$('toast');t.textContent=msg;t.className='show'+(bad?' bad':'');
+  clearTimeout(tt);if(!keep)tt=setTimeout(()=>{t.className=''},bad?7000:3500);
 }
 
 $('f').onsubmit=async e=>{
@@ -161,11 +179,22 @@ $('f').onsubmit=async e=>{
   clearInterval(iv);btn.disabled=false;btn.textContent='Make it a night';busy=false;
 };
 
-async function tweak(instruction){
-  if(busy||!plan)return;busy=true;
-  const m=$('tweakmsg');if(m)m.textContent='Updating your night...';
-  await run({mode:'tweak',brief,plan,change:instruction},msg=>{const t=$('tweakmsg');if(t)t.textContent=msg});
-  busy=false;
+async function tweak(instruction,specific){
+  if(!plan)return;
+  if(busy){toast('Hang on, still working on the last change...');return}
+  busy=true;
+  const y=window.scrollY;
+  $('out').classList.add('working');
+  toast(specific?'Hunting for that place...':'Updating your night...',false,true);
+  let ok=false;
+  try{
+    const payload=specific?{mode:'specific',brief,plan,want:instruction}:{mode:'tweak',brief,plan,change:instruction};
+    ok=await run(payload,msg=>toast(msg,true));
+  }catch(_){toast('Something broke. Try again.',true)}
+  finally{
+    busy=false;$('out').classList.remove('working');
+    if(ok){window.scrollTo(0,y);toast(plan.note||'Done. Night updated.',false)}
+  }
 }
 
 function render(d){
@@ -200,13 +229,20 @@ function render(d){
   const inp=el('input');inp.placeholder='e.g. make it cheaper, add a rooftop bar, start with dinner';inp.setAttribute('aria-label','What to change');
   const b=el('button','go small','Update my night');b.type='button';
   b.onclick=()=>{const v=inp.value.trim();if(v)tweak(v)};
-  const m=el('p','meta');m.id='tweakmsg';m.setAttribute('aria-live','polite');
-  [inp,b,m].forEach(x=>box.appendChild(x));
+  [inp,b].forEach(x=>box.appendChild(x));
   out.appendChild(box);
+  const sbox=el('div','tweak');
+  sbox.appendChild(el('h3',null,'Want to go somewhere specific?'));
+  sbox.appendChild(el('p','meta','Type a place or a type of place, like "Leopold Cafe", "rooftop jazz bar" or "best pani puri". We will find it near you and fit it into the night.'));
+  const sin=el('input');sin.placeholder='A place name or a specialty';sin.setAttribute('aria-label','Somewhere specific');
+  const sb=el('button','go small','Add it to my night');sb.type='button';
+  sb.onclick=()=>{const v=sin.value.trim();if(v)tweak(v,true)};
+  sin.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sb.onclick()}};
+  inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();b.onclick()}};
+  [sin,sb].forEach(x=>sbox.appendChild(x));
+  out.appendChild(sbox);
   out.appendChild(el('p','note',d.live?'Venues come from Google Places. Travel times are estimates. Check availability before you go.':'Venues, prices, travel times and review summaries come from general knowledge, not live data. Check opening hours and availability before you go.'));
 }
 </script>
 </body>
 </html>
-<!-- v2 -->
-
