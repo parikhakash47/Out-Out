@@ -9,7 +9,7 @@ function limited(ip) {
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 
 const SCHEMA = 'Return ONLY minified JSON on a single line, with no markdown and no extra whitespace: {"title":str,"vibe":str,"stops":[{"time":"HH:MM","name":str,"area":str,"type":str,"why":str,"order":[str],"reviews":str,"costPerPerson":str,"bookAhead":bool,"mapsUrl":str}],"transport":[{"how":str,"minutes":number,"cost":str}] (one entry per leg between consecutive stops),"totalPerPerson":str,"tips":[str]}';
-const RULES = "You are an expert local nightlife planner. Use real, well-known venues you are confident exist; never invent venues. Respect dislikes and the budget. Keep every stop within radiusKm of the location. Factor in the date: day of week, season, likely weather, sunset time, and any public holidays or events you are confident about, and say so if they change the night. Set stop times that leave room for the travel time of each leg. Finish by endTime if one is given. Give exactly 4 or 5 stops. Keep every text field to one short sentence, at most 2 items in each order list, so the whole JSON stays small and fast to write. Give at most 2 tips. For each stop give specific dishes or drinks to order and a fair summary of what reviewers generally say, with no fake ratings or quotes. If transport is 'MOST FUN', choose the most fun way to get between each stop (for example a tuk-tuk, a scenic walk, a ferry or a party bus, whatever genuinely exists in that area) and say why. If it is 'We have a designated driver', plan around one car, with parking and drop-off in mind, and make sure the driver has great non-alcoholic options at every stop.";
+const RULES = "You are an expert local nightlife planner. Use real, well-known venues you are confident exist; never invent venues. Respect dislikes and the budget. Keep every stop within radiusKm of the location. Factor in the date: day of week, season, likely weather, sunset time, and any public holidays or events you are confident about, and say so if they change the night. Set stop times that leave room for the travel time of each leg. Finish by endTime if one is given. Give exactly 4 or 5 stops. Every text field must be under 15 words, with at most 2 items in each order list, so the whole JSON stays small and fast to write. Give at most 2 tips. For each stop give specific dishes or drinks to order and a fair summary of what reviewers generally say, with no fake ratings or quotes. If transport is 'MOST FUN', choose the most fun way to get between each stop (for example a tuk-tuk, a scenic walk, a ferry or a party bus, whatever genuinely exists in that area) and say why. If it is 'We have a designated driver', plan around one car, with parking and drop-off in mind, and make sure the driver has great non-alcoholic options at every stop.";
 
 // Optional: real venues from Google Places (New). Skipped if GOOGLE_PLACES_API_KEY is not set.
 async function venues(b) {
@@ -40,17 +40,29 @@ async function venues(b) {
 }
 
 async function askClaude(prompt, started) {
+  let thinkingOff = true;
   for (let attempt = 0; attempt < 2; attempt++) {
     const p = attempt ? prompt + '\nYour previous answer was too long. Make it much shorter: exactly 4 stops, a few words per field, one order item per stop, one tip.' : prompt;
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: process.env.MODEL || 'claude-haiku-5-5', max_tokens: 5000, messages: [{ role: 'user', content: p }] })
-    });
-    if (!r.ok) throw new Error('Claude API ' + r.status + ' ' + (await r.text()).slice(0, 200));
+    let r;
+    for (let k = 0; k < 2; k++) {
+      const body = { model: process.env.MODEL || 'claude-haiku-5-5', max_tokens: 5000, messages: [{ role: 'user', content: p }] };
+      if (thinkingOff) body.thinking = { type: 'disabled' };
+      r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify(body)
+      });
+      if (r.ok) break;
+      const t = await r.text();
+      if (thinkingOff && r.status === 400 && /thinking/i.test(t)) { thinkingOff = false; continue; }
+      throw new Error('Claude API ' + r.status + ' ' + t.slice(0, 200));
+    }
     const j = await r.json();
     const canRetry = attempt === 0 && Date.now() - started < 25000;
-    if (j.stop_reason === 'max_tokens') { if (canRetry) continue; throw new Error('plan was cut off'); }
+    if (j.stop_reason === 'max_tokens') {
+      if (canRetry) continue;
+      throw new Error('plan was cut off (' + (j.content || []).map(c => c.type).join('+') + ', ' + (j.usage && j.usage.output_tokens) + ' tokens)');
+    }
     const text = (j.content || []).map(c => c.text || '').join('');
     try {
       return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
