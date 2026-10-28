@@ -45,8 +45,8 @@ async function findWanted(b, want) {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   if (!key || !want) return null;
   const m = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(b.location);
-  const bias = m ? { locationBias: { circle: { center: { latitude: +m[1], longitude: +m[2] }, radius: Math.min(50000, (+b.radiusKm || 5) * 1000) } } } : {};
-  const q = clip(want, 120) + (m ? '' : ' near ' + b.location);
+  const bias = m ? { locationBias: { circle: { center: { latitude: +m[1], longitude: +m[2] }, radius: 50000 } } } : {};
+  const q = clip(want, 120) + (m ? '' : ' in ' + b.location);
   const mask = 'places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.regularOpeningHours.weekdayDescriptions,places.googleMapsUri';
   try {
     const r = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -122,9 +122,9 @@ module.exports = async (req, res) => {
         const want = clip(body.want, 200);
         const found = await findWanted(b, want);
         prompt += '\nThe user wants to go somewhere specific: "' + want + '". ';
-        if (found) prompt += 'Real matches near the location (Google Places). Pick the best match, copy its mapsUrl, and work it into the night, replacing the weakest stop if the plan already has 5:\n' + JSON.stringify(found);
-        else prompt += 'Find a real, well-known place in or near the requested location that matches that name or specialty, and work it into the night, replacing the weakest stop if the plan already has 5. If you are not confident such a place really exists there, change nothing and use "note" to say you could not find it and ask for more detail.';
-        prompt += '\nPlace it where it fits best in the order, recompute times, travel legs, costs and the total. Keep at least 4 stops. Never use the same venue twice. Return the full updated plan.';
+        if (found) prompt += 'Real matches across the whole city (Google Places), searched beyond the radius on purpose. Pick the best match, copy its mapsUrl, and work it into the night, replacing the weakest stop if the plan already has 5:\n' + JSON.stringify(found);
+        else prompt += 'Find a real, well-known place anywhere in the city of the requested location (the radius does NOT apply to this request) that matches that name or specialty, and work it into the night, replacing the weakest stop if the plan already has 5. If you are not confident such a place really exists there, change nothing and use "note" to say you could not find it and ask for more detail.';
+        prompt += '\nPlace it where it fits best in the order, recompute times, travel legs, costs and the total. Keep at least 4 stops. Never use the same venue twice. If the place is farther than radiusKm from the location, still add it, make the travel leg realistic, and start "note" with exactly "Outside stated radius planned:" followed by roughly how far it is. Return the full updated plan.';
       } else {
         prompt += '\nChange requested: ' + clip(body.change, 300) +
           '\nMake only this change, keep everything else the same where possible, and recompute times, travel legs, costs and the total. Never use the same venue twice. Keep at least 3 stops. Return the full updated plan.';
