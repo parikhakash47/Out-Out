@@ -1,208 +1,96 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Out Out</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#0a0a0a;--ink:#f6efe0;--mute:#a89f8a;--card:#161412;--line:#3a3220;--hot:#d4af37;--gold:#f0d078;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
-:root[data-theme="light"],:root[data-theme="dark"]{--bg:#0a0a0a;--ink:#f6efe0;--mute:#a89f8a;--card:#161412;--line:#3a3220;--hot:#d4af37;--gold:#f0d078}
-*{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.5}
-main{max-width:720px;margin:0 auto;padding:28px 18px 60px}
-h1{font-size:clamp(4.2rem,24vw,9rem);line-height:.82;margin:8px 0 14px;font-weight:800;letter-spacing:-.06em;transform:rotate(-3deg);transform-origin:left bottom}
-h1 .o1{color:var(--hot);text-shadow:0 0 28px rgba(212,175,55,.45)}
-h1 .o2{color:transparent;-webkit-text-stroke:2px var(--hot);display:inline-block;transform:translateY(-.04em) rotate(2deg)}
-.sub{color:var(--mute);margin:0 0 26px;max-width:52ch}
-form{display:grid;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
-label{display:grid;gap:5px;font-weight:600;font-size:.92rem}
-input,textarea,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
-input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
-.row{display:grid;gap:14px;grid-template-columns:1fr 1fr}
-.loc{display:flex;gap:8px}
-button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:11px 16px;cursor:pointer}
-.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);white-space:nowrap}
-.go{background:var(--hot);color:#0a0a0a;font-size:1.35rem;font-weight:800;letter-spacing:-.01em;padding:18px;border-radius:14px;box-shadow:0 0 0 0 rgba(212,175,55,.6),0 10px 30px rgba(212,175,55,.25);transition:transform .15s,box-shadow .15s}
-.go:hover{transform:translateY(-2px) rotate(-.5deg);box-shadow:0 0 0 4px rgba(212,175,55,.25),0 14px 36px rgba(212,175,55,.4)}
-.go:active{transform:scale(.98)}
-.go:disabled{opacity:.85;cursor:wait;animation:pulse 1.2s infinite}
-.tick{overflow:hidden;white-space:nowrap;border-block:1px solid var(--line);margin:0 -18px 22px;padding:8px 0;color:var(--gold);font-weight:600;font-size:1.05rem}
-.track{display:inline-flex;animation:slide 28s linear infinite}
-.track span{padding-right:.6em}
-@keyframes slide{to{transform:translateX(-50%)}}
-@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(212,175,55,0)}}
-@keyframes pop{from{opacity:0;transform:translateY(18px) scale(.97)}}
-.stop{animation:pop .5s cubic-bezier(.2,.9,.3,1.2) both}
-.time{font-size:1.5rem;font-weight:800;margin-right:.4em}
-.title{color:var(--hot);font-size:2.4rem;line-height:1;transform:rotate(-1.5deg)}
-form{border-color:var(--hot);box-shadow:0 0 40px rgba(212,175,55,.08)}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-#out{margin-top:28px}
-.title{font-size:1.9rem;font-weight:800;letter-spacing:-.02em;margin:0}
-.vibe{color:var(--mute);margin:4px 0 18px}
-.stop{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--hot);border-radius:12px;padding:14px 16px;margin:0 0 6px}
-.stop h3{margin:0 0 2px;font-size:1.2rem}
-.time{color:var(--hot);font-weight:700}
-.meta{color:var(--mute);font-size:.9rem}
-.stop p{margin:6px 0 0}
-.tag{font-weight:700;color:var(--gold)}
-.move{margin:0 0 6px 14px;padding:6px 12px;border-left:2px dashed var(--line);color:var(--mute);font-size:.92rem}
-.total{margin-top:14px;font-weight:700}
-.note{color:var(--mute);font-size:.85rem;margin-top:10px}
-.err{color:var(--hot);font-weight:600}
-a.tag{color:var(--gold)}
-.acts{display:flex;gap:8px;margin-top:10px}
-.mini{padding:6px 10px;font-size:.85rem}
-.tweak{margin-top:22px;background:var(--card);border:1px dashed var(--hot);border-radius:14px;padding:16px;display:grid;gap:10px}
-.tweak h3{margin:0;font-size:1.3rem;color:var(--hot)}
-.go.small{font-size:1rem;padding:12px}
-.when{display:grid;gap:8px}
-.lbl{font-weight:600;font-size:.92rem}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:9px 16px}
-.chip[aria-pressed="true"]{background:var(--hot);color:#0a0a0a;border-color:var(--hot)}
-.warn{border:1px solid var(--hot);border-radius:10px;padding:9px 12px;margin:0 0 16px;font-size:.9rem;color:var(--gold)}
-</style>
-</head>
-<body>
-<main>
-<h1 aria-label="Out Out"><span class="o1">Out</span> <span class="o2">Out</span></h1>
-<div class="tick" aria-hidden="true"><div class="track"><span>rooftops ✦ street food ✦ cocktails ✦ live music ✦ dancing ✦ the after-party ✦ </span><span>rooftops ✦ street food ✦ cocktails ✦ live music ✦ dancing ✦ the after-party ✦ </span></div></div>
-<p class="sub">Tell us the vibe. We sort the night: where to go, what to order, how to get there, what it costs.</p>
-<form id="f">
-<label>Location
-<div class="loc"><input id="loc" placeholder="City or neighbourhood" required><button type="button" class="ghost" id="geo">Use my location</button></div>
-</label>
-<div class="when">
-<span class="lbl" id="whenlbl">When are you going out?</span>
-<div class="chips" role="group" aria-labelledby="whenlbl">
-<button type="button" class="chip" data-d="0">Tonight</button>
-<button type="button" class="chip" data-d="1">Tomorrow</button>
-<button type="button" class="chip" data-d="sat">This Saturday</button>
-<button type="button" class="chip" data-d="pick">Pick a date</button>
-</div>
-<input id="date" type="date" required aria-labelledby="whenlbl">
-</div>
-<label>What you like<textarea id="likes" rows="2" placeholder="Rooftops, live jazz, street food, cocktails, dancing"></textarea></label>
-<label>What you dislike<textarea id="dislikes" rows="2" placeholder="Loud clubs, long queues, spicy food"></textarea></label>
-<div class="row">
-<label>Budget per person<input id="budget" placeholder="e.g. 3000 INR"></label>
-<label>People in your party<input id="party" type="number" min="1" max="30" value="2"></label>
-</div>
-<label>How far will you go?
-<select id="radius"><option value="2">Within 2 km</option><option value="5" selected>Within 5 km</option><option value="10">Within 10 km</option><option value="25">Within 25 km</option><option value="50">Within 50 km</option></select></label>
-<div class="row">
-<label>Start time<input id="start" type="time" value="19:00"></label>
-<label>End time (optional)<input id="end" type="time"></label>
-</div>
-<label>Getting around
-<select id="mode"><option>MOST FUN</option><option>Mix of cab and walking</option><option>Mostly walking</option><option>Public transport</option><option>We have a designated driver</option></select>
-<span id="modehint" class="tag"></span></label>
-<button class="go" id="go" type="submit">Make it a night</button>
-</form>
-<div id="out" aria-live="polite"></div>
-</main>
-<script>
-const $=id=>document.getElementById(id);
-function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
-const hint=()=>{$('modehint').textContent=$('mode').value==='MOST FUN'?'we decide what the most fun option of movement is':''};
-$('mode').onchange=hint;hint();
-const ymd=d=>d.toLocaleDateString('en-CA');
-$('date').min=ymd(new Date());
-function setChip(el){document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c===el)))}
-document.querySelectorAll('.chip').forEach(c=>{
-  c.setAttribute('aria-pressed','false');
-  c.onclick=()=>{
-    const k=c.dataset.d,d=new Date();
-    if(k==='pick'){setChip(c);try{$('date').showPicker()}catch(_){$('date').focus()}return}
-    if(k==='sat'){d.setDate(d.getDate()+((6-d.getDay()+7)%7||7))}else{d.setDate(d.getDate()+(+k))}
-    $('date').value=ymd(d);setChip(c);
-  };
-});
-$('date').onchange=()=>{
-  const v=$('date').value,t=new Date(),m=[0,1].map(n=>{const x=new Date();x.setDate(t.getDate()+n);return ymd(x)});
-  const hit=[...document.querySelectorAll('.chip')].find(c=>(c.dataset.d==='0'&&v===m[0])||(c.dataset.d==='1'&&v===m[1]));
-  setChip(hit||document.querySelector('.chip[data-d="pick"]'));
-};
+// Out Out server function. Keeps API keys off the page, adds real venues (optional) and a basic rate limit.
+const hits = new Map();
+function limited(ip) {
+  const now = Date.now(), win = 36e5;
+  const list = (hits.get(ip) || []).filter(t => now - t < win);
+  list.push(now); hits.set(ip, list);
+  return list.length > (+process.env.RATE_LIMIT_PER_HOUR || 10);
+}
+const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 
-$('geo').onclick=()=>{
-  if(!navigator.geolocation){$('loc').placeholder='Location not available here, type it in';return}
-  $('geo').textContent='Locating...';
-  navigator.geolocation.getCurrentPosition(
-    p=>{$('loc').value=p.coords.latitude.toFixed(4)+', '+p.coords.longitude.toFixed(4);$('geo').textContent='Use my location'},
-    ()=>{$('geo').textContent='Use my location';$('loc').placeholder='Location blocked, type it in'}
-  );
-};
+const SCHEMA = 'Return ONLY minified JSON on a single line, with no markdown and no extra whitespace: {"title":str,"vibe":str,"stops":[{"time":"HH:MM","name":str,"area":str,"type":str,"why":str,"order":[str],"reviews":str,"costPerPerson":str,"bookAhead":bool,"mapsUrl":str}],"transport":[{"how":str,"minutes":number,"cost":str}] (one entry per leg between consecutive stops),"totalPerPerson":str,"tips":[str]}';
+const RULES = "You are an expert local nightlife planner. Use real, well-known venues you are confident exist; never invent venues. Respect dislikes and the budget. Keep every stop within radiusKm of the location. Factor in the date: day of week, season, likely weather, sunset time, and any public holidays or events you are confident about, and say so if they change the night. Set stop times that leave room for the travel time of each leg. Finish by endTime if one is given. Give exactly 4 or 5 stops. Keep every text field to one short sentence, at most 2 items in each order list, so the whole JSON stays small and fast to write. Give at most 2 tips. For each stop give specific dishes or drinks to order and a fair summary of what reviewers generally say, with no fake ratings or quotes. If transport is 'MOST FUN', choose the most fun way to get between each stop (for example a tuk-tuk, a scenic walk, a ferry or a party bus, whatever genuinely exists in that area) and say why. If it is 'We have a designated driver', plan around one car, with parking and drop-off in mind, and make sure the driver has great non-alcoholic options at every stop.";
 
-let plan=null,brief=null,busy=false;
-async function run(payload,fail){
-  try{
-    const r=await fetch('/api/plan',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
-    const j=await r.json();
-    if(!r.ok){fail(j.error||'Something went wrong. Try again.');return}
-    plan=j;render(plan);
-  }catch(_){fail('Could not reach the server. Check your connection and try again.')}
+// Optional: real venues from Google Places (New). Skipped if GOOGLE_PLACES_API_KEY is not set.
+async function venues(b) {
+  const key = process.env.GOOGLE_PLACES_API_KEY;
+  if (!key) return null;
+  const m = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(b.location);
+  const bias = m ? { locationBias: { circle: { center: { latitude: +m[1], longitude: +m[2] }, radius: Math.min(50000, (+b.radiusKm || 5) * 1000) } } } : {};
+  const where = m ? '' : ' near ' + b.location;
+  const likes = b.likes ? clip(b.likes, 80) + ' ' : '';
+  const queries = ['best bars' + where, 'best restaurants' + where, likes + 'nightlife' + where, 'late night food' + where];
+  const mask = 'places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.priceLevel,places.regularOpeningHours.weekdayDescriptions,places.googleMapsUri';
+  const results = await Promise.all(queries.map(q =>
+    fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': mask },
+      body: JSON.stringify({ textQuery: q, maxResultCount: 10, ...bias })
+    }).then(r => r.ok ? r.json() : { places: [] }).catch(() => ({ places: [] }))
+  ));
+  const seen = new Set(), list = [];
+  for (const r of results) for (const p of (r.places || [])) {
+    const name = p.displayName && p.displayName.text;
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    list.push({ name, address: p.formattedAddress, rating: p.rating, ratings: p.userRatingCount, price: p.priceLevel,
+      hours: p.regularOpeningHours && p.regularOpeningHours.weekdayDescriptions, mapsUrl: p.googleMapsUri });
+  }
+  return list.length ? list.slice(0, 30) : null;
 }
 
-$('f').onsubmit=async e=>{
-  e.preventDefault();
-  if(busy)return;busy=true;
-  $('out').replaceChildren();
-  const btn=$('go');btn.disabled=true;
-  const msgs=['Finding the good bars...','Skipping the queues...','Picking what to order...','Sorting your ride...'];let mi=0;btn.textContent=msgs[0];
-  const iv=setInterval(()=>{mi=(mi+1)%msgs.length;btn.textContent=msgs[mi]},1800);
-  const day=new Date($('date').value+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  brief={location:$('loc').value,date:day,radiusKm:$('radius').value,likes:$('likes').value,dislikes:$('dislikes').value,budgetPerPerson:$('budget').value,partySize:$('party').value,startTime:$('start').value,endTime:$('end').value||'none, so plan it as long as makes sense',transport:$('mode').value};
-  await run({mode:'new',brief},m=>$('out').appendChild(el('p','err',m)));
-  clearInterval(iv);btn.disabled=false;btn.textContent='Make it a night';busy=false;
+async function askClaude(prompt, started) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const p = attempt ? prompt + '\nYour previous answer was too long. Make it much shorter: exactly 4 stops, a few words per field, one order item per stop, one tip.' : prompt;
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: process.env.MODEL || 'claude-haiku-5-5', max_tokens: 5000, messages: [{ role: 'user', content: p }] })
+    });
+    if (!r.ok) throw new Error('Claude API ' + r.status + ' ' + (await r.text()).slice(0, 200));
+    const j = await r.json();
+    const canRetry = attempt === 0 && Date.now() - started < 25000;
+    if (j.stop_reason === 'max_tokens') { if (canRetry) continue; throw new Error('plan was cut off'); }
+    const text = (j.content || []).map(c => c.text || '').join('');
+    try {
+      return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+    } catch (e) {
+      if (canRetry) continue;
+      throw new Error('plan could not be read');
+    }
+  }
+}
+
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'Server is missing ANTHROPIC_API_KEY.' });
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+  if (limited(ip)) return res.status(429).json({ error: 'That is a lot of plans. Try again in an hour.' });
+  try {
+    const body = req.body || {}, bi = body.brief || {};
+    const b = {
+      location: clip(bi.location, 120), date: clip(bi.date, 60), radiusKm: clip(bi.radiusKm, 3),
+      likes: clip(bi.likes, 400), dislikes: clip(bi.dislikes, 400), budgetPerPerson: clip(bi.budgetPerPerson, 60),
+      partySize: clip(bi.partySize, 3), startTime: clip(bi.startTime, 8), endTime: clip(bi.endTime, 80), transport: clip(bi.transport, 60)
+    };
+    if (!b.location.trim()) return res.status(400).json({ error: 'Add a location first.' });
+    const started = Date.now();
+    const list = await venues(b);
+    let prompt = RULES + '\nBrief: ' + JSON.stringify(b);
+    if (list) prompt += '\nReal venues near the location (from Google Places). Choose every stop ONLY from this list, respect opening hours for the date, and copy the matching mapsUrl into each stop:\n' + JSON.stringify(list);
+    if (body.mode === 'tweak' && body.plan) {
+      prompt += '\nCurrent plan: ' + JSON.stringify(body.plan).slice(0, 12000) + '\nChange requested: ' + clip(body.change, 300) +
+        '\nMake only this change, keep everything else the same where possible, and recompute times, travel legs, costs and the total. Return the full updated plan.';
+    }
+    prompt += '\n' + (list ? SCHEMA : SCHEMA.replace(',"mapsUrl":str', ''));
+    const plan = await askClaude(prompt, started);
+    plan.live = !!list;
+    (plan.stops || []).forEach(st => {
+      if (!list || !/^https:\/\//.test(st.mapsUrl || '')) st.mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([st.name, st.area, b.location].filter(Boolean).join(' '));
+    });
+    res.status(200).json(plan);
+  } catch (e) {
+    console.error(e);
+    res.status(502).json({ error: 'Could not build the plan (' + String(e.message).slice(0, 120) + '). Try again.' });
+  }
 };
-
-async function tweak(instruction){
-  if(busy||!plan)return;busy=true;
-  const m=$('tweakmsg');if(m)m.textContent='Updating your night...';
-  await run({mode:'tweak',brief,plan,change:instruction},msg=>{const t=$('tweakmsg');if(t)t.textContent=msg});
-  busy=false;
-}
-
-function render(d){
-  const out=$('out');out.replaceChildren();
-  out.appendChild(el('h2','title',d.title||'Your night out'));
-  out.appendChild(el('p','vibe',d.vibe||''));
-  out.appendChild(el('div','warn',d.live?'Heads up: the creators were a little tipsy when they made this. Check opening hours before you go.':'Heads up: the creators were a little tipsy when they made this. Double-check each place is open (and actually exists) before you go.'));
-  const n=(d.stops||[]).length;
-  (d.stops||[]).forEach((s,i)=>{
-    const c=el('div','stop');c.style.animationDelay=(i*140)+'ms';
-    const h=el('h3');h.appendChild(el('span','time',s.time||''));h.appendChild(document.createTextNode(s.name||''));
-    c.appendChild(h);
-    c.appendChild(el('div','meta',[s.type,s.area,s.costPerPerson&&('about '+s.costPerPerson+' pp'),s.bookAhead&&'book ahead'].filter(Boolean).join(', ')));
-    if(s.mapsUrl&&/^https:\/\//.test(s.mapsUrl)){const l=el('a','tag','Open in Maps');l.href=s.mapsUrl;l.target='_blank';l.rel='noopener';const p=el('p');p.appendChild(l);c.appendChild(p)}
-    if(s.why)c.appendChild(el('p',null,s.why));
-    if(s.order&&s.order.length){const p=el('p');p.appendChild(el('span','tag','Order: '));p.appendChild(document.createTextNode(s.order.join(', ')));c.appendChild(p)}
-    if(s.reviews){const p=el('p');p.appendChild(el('span','tag','What people say: '));p.appendChild(document.createTextNode(s.reviews));c.appendChild(p)}
-    const a=el('div','acts');
-    const sw=el('button','ghost mini','Swap this stop');sw.type='button';sw.onclick=()=>tweak('Replace stop '+(i+1)+' ("'+s.name+'") with a different venue of a similar kind');a.appendChild(sw);
-    if(n>3){const rm=el('button','ghost mini','Remove');rm.type='button';rm.onclick=()=>tweak('Remove stop '+(i+1)+' ("'+s.name+'") and rebalance the night');a.appendChild(rm)}
-    c.appendChild(a);
-    out.appendChild(c);
-    const t=(d.transport||[])[i];
-    if(t&&i<n-1){const txt=typeof t==='string'?t:[t.how,t.minutes!=null&&(t.minutes+' min'),t.cost].filter(Boolean).join(', ');out.appendChild(el('div','move',txt))}
-  });
-  const tm=(d.transport||[]).reduce((a,t)=>a+(t&&+t.minutes||0),0);
-  const bits=[d.totalPerPerson&&('Estimated total: '+d.totalPerPerson+' per person'),tm&&('travel time: '+tm+' min')].filter(Boolean);
-  if(bits.length)out.appendChild(el('div','total',bits.join(', ')));
-  (d.tips||[]).forEach(t=>out.appendChild(el('p','meta','Tip: '+t)));
-  const box=el('div','tweak');
-  box.appendChild(el('h3',null,'Change bits and pieces'));
-  const inp=el('input');inp.placeholder='e.g. make it cheaper, add a rooftop bar, start with dinner';inp.setAttribute('aria-label','What to change');
-  const b=el('button','go small','Update my night');b.type='button';
-  b.onclick=()=>{const v=inp.value.trim();if(v)tweak(v)};
-  const m=el('p','meta');m.id='tweakmsg';m.setAttribute('aria-live','polite');
-  [inp,b,m].forEach(x=>box.appendChild(x));
-  out.appendChild(box);
-  out.appendChild(el('p','note',d.live?'Venues come from Google Places. Travel times are estimates. Check availability before you go.':'Venues, prices, travel times and review summaries come from general knowledge, not live data. Check opening hours and availability before you go.'));
-}
-</script>
-</body>
-</html>
