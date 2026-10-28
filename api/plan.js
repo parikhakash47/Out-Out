@@ -9,7 +9,7 @@ function limited(ip, kind) {
 }
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 
-const SCHEMA = 'Return ONLY minified JSON on a single line, with no markdown and no extra whitespace: {"title":str,"vibe":str,"stops":[{"time":"HH:MM","name":str,"area":str,"type":str,"why":str,"order":[str],"reviews":str,"costPerPerson":str,"bookAhead":bool,"mapsUrl":str}],"transport":[{"how":str,"minutes":number,"cost":str}] (one entry per leg between consecutive stops),"totalPerPerson":str,"tips":[str],"note":str (optional, only to tell the user something short)}';
+const SCHEMA = 'Return ONLY minified JSON on a single line, with no markdown and no extra whitespace: {"title":str,"vibe":str,"stops":[{"time":"HH:MM","name":str,"area":str,"type":str,"why":str,"order":[str],"reviews":str,"costPerPerson":str,"bookAhead":bool,"mapsUrl":str}],"transport":[{"how":str,"minutes":number,"cost":str}] (one entry per leg between consecutive stops),"totalPerPerson":str,"tips":[str],"note":str (optional, only to tell the user something short),"farKm":number (optional, only when adding a requested place: its distance in km from the location)}';
 const RULES = "You are an expert local nightlife planner. Use real, well-known venues you are confident exist; never invent venues. Respect dislikes and the budget. Keep every stop within radiusKm of the location. Factor in the date: day of week, season, likely weather, sunset time, and any public holidays or events you are confident about, and say so if they change the night. Set stop times that leave room for the travel time of each leg. Finish by endTime if one is given. Give 4 or 5 stops, never fewer than 4. Never use the same venue twice. Every text field must be under 15 words, with at most 2 items in each order list, so the whole JSON stays small and fast to write. Give at most 2 tips. For each stop give specific dishes or drinks to order and a fair summary of what reviewers generally say, with no fake ratings or quotes. If transport is 'MOST FUN', choose the most fun way to get between each stop (for example a tuk-tuk, a scenic walk, a ferry or a party bus, whatever genuinely exists in that area) and say why. If it is 'We have a designated driver', plan around one car, with parking and drop-off in mind, and make sure the driver has great non-alcoholic options at every stop.";
 
 // Optional: real venues from Google Places (New). Skipped if GOOGLE_PLACES_API_KEY is not set.
@@ -111,7 +111,9 @@ module.exports = async (req, res) => {
     if (!b.location.trim()) return res.status(400).json({ error: 'Add a location first.' });
     const started = Date.now();
     const list = await venues(b);
-    let prompt = RULES + '\nBrief: ' + JSON.stringify(b);
+    const origRadius = +b.radiusKm || 5;
+    const bm = body.mode === 'specific' ? Object.assign({}, b, { radiusKm: 'no limit for the requested place' }) : b;
+    let prompt = RULES + '\nBrief: ' + JSON.stringify(bm);
     if (list) prompt += '\nReal venues near the location (from Google Places). Choose every stop ONLY from this list, respect opening hours for the date, and copy the matching mapsUrl into each stop:\n' + JSON.stringify(list);
     const isEdit = (body.mode === 'tweak' || body.mode === 'specific') && body.plan;
     if (isEdit) {
@@ -124,7 +126,7 @@ module.exports = async (req, res) => {
         prompt += '\nThe user wants to go somewhere specific: "' + want + '". ';
         if (found) prompt += 'Real matches across the whole city (Google Places), searched beyond the radius on purpose. Pick the best match, copy its mapsUrl, and work it into the night, replacing the weakest stop if the plan already has 5:\n' + JSON.stringify(found);
         else prompt += 'Find a real, well-known place anywhere in the city of the requested location (the radius does NOT apply to this request) that matches that name or specialty, and work it into the night, replacing the weakest stop if the plan already has 5. Make a real best effort: if the user named a place you know, use it; if they named a type or specialty, pick the best-known real venue of that kind (for example a well-known rooftop bar or jazz venue in that city). Only if you truly know no such place, change nothing and use "note" to say you could not find it and ask for the area or more detail. Never invent a venue.';
-        prompt += '\nPlace it where it fits best in the order, recompute times, travel legs, costs and the total. Keep at least 4 stops. Never use the same venue twice. If the place is farther than radiusKm from the location, still add it, make the travel leg realistic, and start "note" with exactly "Outside stated radius planned:" followed by roughly how far it is. Return the full updated plan.';
+        prompt += '\nPlace it where it fits best in the order, recompute times, travel legs, costs and the total. Keep at least 4 stops. Never use the same venue twice. The radius does not apply to this place, so ADD IT even if it is far away, with a realistic travel leg, and set farKm to its distance in km from the location. A rooftop or jazz request means a venue that really is that, not just a bar chain. Return the full updated plan.';
       } else {
         prompt += '\nChange requested: ' + clip(body.change, 300) +
           '\nMake only this change, keep everything else the same where possible, and recompute times, travel legs, costs and the total. Never use the same venue twice. Keep at least 3 stops. Return the full updated plan.';
@@ -144,6 +146,11 @@ module.exports = async (req, res) => {
     (plan.stops || []).forEach(st => {
       if (!list || !/^https:\/\//.test(st.mapsUrl || '')) st.mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([st.name, st.area, b.location].filter(Boolean).join(' '));
     });
+    if (body.mode === 'specific') {
+      const far = +plan.farKm;
+      if (far > origRadius) plan.note = 'Outside stated radius planned: about ' + Math.round(far) + ' km from where you are starting. Travel time is included.';
+    }
+    delete plan.farKm;
     res.status(200).json(plan);
   } catch (e) {
     console.error(e);
