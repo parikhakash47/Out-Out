@@ -58,6 +58,11 @@ a.tag{color:var(--gold)}
 .tweak{margin-top:22px;background:var(--card);border:1px dashed var(--hot);border-radius:14px;padding:16px;display:grid;gap:10px}
 .tweak h3{margin:0;font-size:1.3rem;color:var(--hot)}
 .go.small{font-size:1rem;padding:12px}
+.when{display:grid;gap:8px}
+.lbl{font-weight:600;font-size:.92rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:9px 16px}
+.chip[aria-pressed="true"]{background:var(--hot);color:#0a0a0a;border-color:var(--hot)}
 </style>
 </head>
 <body>
@@ -69,17 +74,24 @@ a.tag{color:var(--gold)}
 <label>Location
 <div class="loc"><input id="loc" placeholder="City or neighbourhood" required><button type="button" class="ghost" id="geo">Use my location</button></div>
 </label>
+<div class="when">
+<span class="lbl" id="whenlbl">When are you going out?</span>
+<div class="chips" role="group" aria-labelledby="whenlbl">
+<button type="button" class="chip" data-d="0">Tonight</button>
+<button type="button" class="chip" data-d="1">Tomorrow</button>
+<button type="button" class="chip" data-d="sat">This Saturday</button>
+<button type="button" class="chip" data-d="pick">Pick a date</button>
+</div>
+<input id="date" type="date" required aria-labelledby="whenlbl">
+</div>
 <label>What you like<textarea id="likes" rows="2" placeholder="Rooftops, live jazz, street food, cocktails, dancing"></textarea></label>
 <label>What you dislike<textarea id="dislikes" rows="2" placeholder="Loud clubs, long queues, spicy food"></textarea></label>
 <div class="row">
 <label>Budget per person<input id="budget" placeholder="e.g. 3000 INR"></label>
 <label>People in your party<input id="party" type="number" min="1" max="30" value="2"></label>
 </div>
-<div class="row">
-<label>Date<input id="date" type="date" required></label>
 <label>How far will you go?
 <select id="radius"><option value="2">Within 2 km</option><option value="5" selected>Within 5 km</option><option value="10">Within 10 km</option><option value="25">Within 25 km</option><option value="50">Within 50 km</option></select></label>
-</div>
 <div class="row">
 <label>Start time<input id="start" type="time" value="19:00"></label>
 <label>End time (optional)<input id="end" type="time"></label>
@@ -96,7 +108,23 @@ const $=id=>document.getElementById(id);
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
 const hint=()=>{$('modehint').textContent=$('mode').value==='MOST FUN'?'we decide what the most fun option of movement is':''};
 $('mode').onchange=hint;hint();
-$('date').value=new Date().toLocaleDateString('en-CA');
+const ymd=d=>d.toLocaleDateString('en-CA');
+$('date').min=ymd(new Date());
+function setChip(el){document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c===el)))}
+document.querySelectorAll('.chip').forEach(c=>{
+  c.setAttribute('aria-pressed','false');
+  c.onclick=()=>{
+    const k=c.dataset.d,d=new Date();
+    if(k==='pick'){setChip(c);try{$('date').showPicker()}catch(_){$('date').focus()}return}
+    if(k==='sat'){d.setDate(d.getDate()+((6-d.getDay()+7)%7||7))}else{d.setDate(d.getDate()+(+k))}
+    $('date').value=ymd(d);setChip(c);
+  };
+});
+$('date').onchange=()=>{
+  const v=$('date').value,t=new Date(),m=[0,1].map(n=>{const x=new Date();x.setDate(t.getDate()+n);return ymd(x)});
+  const hit=[...document.querySelectorAll('.chip')].find(c=>(c.dataset.d==='0'&&v===m[0])||(c.dataset.d==='1'&&v===m[1]));
+  setChip(hit||document.querySelector('.chip[data-d="pick"]'));
+};
 
 $('geo').onclick=()=>{
   if(!navigator.geolocation){$('loc').placeholder='Location not available here, type it in';return}
