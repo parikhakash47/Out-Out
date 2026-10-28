@@ -193,7 +193,7 @@ async function tweak(instruction,specific){
   }catch(_){toast('Something broke. Try again.',true)}
   finally{
     busy=false;$('out').classList.remove('working');
-    if(ok){window.scrollTo(0,y);toast(plan.note||'Done. Night updated.',false)}
+    if(ok){window.scrollTo(0,y);toast(plan.note?(/^Outside/i.test(plan.note)?'Added. That one is outside your radius.':plan.note):'Done. Night updated.',false)}
   }
 }
 
@@ -202,6 +202,7 @@ function render(d){
   out.appendChild(el('h2','title',d.title||'Your night out'));
   out.appendChild(el('p','vibe',d.vibe||''));
   out.appendChild(el('div','warn',d.live?'Heads up: the creators were a little tipsy when they made this. Check opening hours before you go.':'Heads up: the creators were a little tipsy when they made this. Double-check each place is open (and actually exists) before you go.'));
+  if(d.note)out.appendChild(el('div','warn',d.note));
   const n=(d.stops||[]).length;
   (d.stops||[]).forEach((s,i)=>{
     const c=el('div','stop');c.style.animationDelay=(i*140)+'ms';
